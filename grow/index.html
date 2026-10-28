@@ -220,6 +220,29 @@ input[type=time].sel{width:auto}
 .empty{text-align:center;padding:18px 6px;color:var(--muted);font-size:.9em}
 .confetti{font-size:4em;animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{from{transform:scale(.2);opacity:0}to{transform:none;opacity:1}}
+/* Locked In */
+.lock{position:fixed;inset:0;z-index:58;background:var(--bg);overflow:auto}
+.lock::before{content:"";position:fixed;inset:0;background:radial-gradient(90% 55% at 50% 0%,color-mix(in srgb,var(--ac) 28%,transparent),transparent 70%);pointer-events:none}
+.lock .wrap{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;min-height:100%}
+.lkbadge{align-self:center;margin:18px 0 12px;padding:7px 14px;border-radius:99px;background:color-mix(in srgb,var(--ac) 18%,transparent);color:var(--ac);font-weight:800;letter-spacing:.14em;font-size:.75em}
+.lock h1{text-align:center;font-size:2.1em;font-weight:800;margin:4px 0 8px}
+.lock .sub{text-align:center;color:var(--muted);margin:0 0 22px}
+.lkpick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.lkpick button{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;text-align:left}
+.lkpick button.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,var(--card))}
+.lkpick b{display:block;font-size:.9em} .lkpick span{font-size:.75em;color:var(--muted)}
+.hold{position:relative;overflow:hidden;width:100%;height:46px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:.85em;margin-top:12px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.hold i{position:absolute;inset:0 auto 0 0;width:0;background:color-mix(in srgb,var(--bad) 32%,transparent)}
+.hold span{position:relative;pointer-events:none}
+.lockcard{border-color:color-mix(in srgb,var(--ac) 40%,var(--line))}
+.daychips{display:flex;gap:6px}
+.daychips button{width:34px;height:34px;border-radius:11px;background:var(--card2);border:1px solid var(--line);font-weight:700;font-size:.8em;color:var(--muted)}
+.daychips button.on{background:var(--ac);border-color:var(--ac);color:var(--ac-ink)}
+.badges{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.bdg{text-align:center;font-size:.7em;color:var(--muted);font-weight:600;line-height:1.25}
+.bdg div{aspect-ratio:1;border-radius:18px;display:grid;place-items:center;font-size:2em;background:var(--card2);margin-bottom:5px;filter:grayscale(1);opacity:.35}
+.bdg.on{color:var(--ink)} .bdg.on div{filter:none;opacity:1;background:color-mix(in srgb,var(--ac) 16%,var(--card2))}
+.awaymsg{color:var(--warn);font-weight:700}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -237,6 +260,7 @@ input[type=time].sel{width:auto}
 <div class="scrim" id="scrim" data-act="closeSheet"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div id="sheetBody"></div></div>
 
+<div class="lock" id="lock" hidden role="dialog" aria-modal="true" aria-label="Locked In"></div>
 <div class="player" id="player" hidden></div>
 <div class="ob" id="ob" hidden></div>
 <div class="toast" id="toast"></div>
@@ -268,7 +292,7 @@ const EX = {
   cobra:{n:"Cobra stretch",t:40,c:"Lie face down, hands under shoulders, press your chest up. Hips stay on the floor."},
   child:{n:"Child's pose",t:45,c:"Knees wide, sit back on your heels, arms long in front. Breathe into your back."},
   fold:{n:"Standing forward fold",t:40,c:"Soft knees. Let your head and arms hang heavy and relax your neck."},
-  side:{n:"Standing side reach",t:40,c:"One arm overhead, lean away and lengthen your side. Switch at halfway."},
+  side:{n:"Standing side reach",t:40,s:1,c:"One arm overhead, lean away and lengthen your side. Switch at halfway."},
   hang:{n:"Dead hang",t:30,c:"Hang from a bar with straight arms and relaxed legs. No bar? Do a tall overhead reach instead."},
   reach:{n:"Tall overhead reach",t:30,c:"Rise onto your toes, reach as high as you can, hold and breathe."},
   chintuck:{n:"Chin tucks",t:40,c:"Glide your chin straight back (make a double chin), hold 2 seconds, release. Fixes forward head."},
@@ -279,8 +303,8 @@ const EX = {
   plank:{n:"Plank",t:40,c:"Straight line from head to heels. Brace your core and don't let your hips sag."},
   birddog:{n:"Bird dog",t:45,c:"On all fours, extend opposite arm and leg, hold 2 seconds, switch."},
   superman:{n:"Superman hold",t:30,c:"Face down, lift arms, chest and legs off the floor. Builds the muscles that hold you upright."},
-  hipflex:{n:"Kneeling hip-flexor stretch",t:50,c:"Lunge with the back knee down, tuck your pelvis and push hips forward. Switch at halfway."},
-  twist:{n:"Lying spinal twist",t:50,c:"On your back, drop both knees to one side and look the other way. Switch at halfway."},
+  hipflex:{n:"Kneeling hip-flexor stretch",t:50,s:1,c:"Lunge with the back knee down, tuck your pelvis and push hips forward. Switch at halfway."},
+  twist:{n:"Lying spinal twist",t:50,s:1,c:"On your back, drop both knees to one side and look the other way. Switch at halfway."},
   pelvic:{n:"Pelvic tilts",t:40,c:"On your back with knees bent. Gently flatten, then arch your lower back."},
   kneeraise:{n:"Hanging knee raises",t:30,c:"From a bar, slowly lift your knees toward your chest. No bar? Do lying reverse crunches."},
   jacks:{n:"Jumping jacks",t:40,c:"Stay light on your feet and reach your arms fully overhead."},
@@ -377,12 +401,12 @@ const HABITS = {
 
 /* ---------- State ---------- */
 const KEY = "rise.v1";
-const DEF_SET = {units:"metric",theme:"system",accent:"teal",size:"m",sound:true,haptics:true,awake:true,rest:15,prep:5,waterGoal:8,
+const DEF_SET = {voice:true,level:"normal",weekGoal:5,lock:{on:false,time:"17:00",days:[1,1,1,1,1,1,1],strict:true},units:"metric",theme:"system",accent:"teal",size:"m",sound:true,haptics:true,awake:true,rest:15,prep:5,waterGoal:8,
   habits:Object.fromEntries(Object.keys(HABITS).map(k=>[k,true])),rem:{on:false,workout:"17:00",bed:"21:30",water:true}};
 let S = load();
 function load(){
-  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && typeof s==="object"){ s.settings = Object.assign({},DEF_SET,s.settings||{}); s.settings.habits = Object.assign({},DEF_SET.habits,s.settings.habits||{}); s.settings.rem = Object.assign({},DEF_SET.rem,s.settings.rem||{}); s.days=s.days||{}; s.heights=s.heights||[]; s.weights=s.weights||[]; return s; } }catch(e){}
-  return {profile:null,settings:structuredClone(DEF_SET),days:{},heights:[],weights:[]};
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && typeof s==="object"){ s.settings = Object.assign({},DEF_SET,s.settings||{}); s.settings.habits = Object.assign({},DEF_SET.habits,s.settings.habits||{}); s.settings.rem = Object.assign({},DEF_SET.rem,s.settings.rem||{}); s.settings.lock = Object.assign({},DEF_SET.lock,s.settings.lock||{}); s.log=s.log||[]; s.badges=s.badges||{}; s.days=s.days||{}; s.heights=s.heights||[]; s.weights=s.weights||[]; return s; } }catch(e){}
+  return {profile:null,settings:structuredClone(DEF_SET),days:{},heights:[],weights:[],log:[],badges:{}};
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 const $ = s => document.querySelector(s);
@@ -448,7 +472,10 @@ function ringSvg(pct,size=112,sw=11,col="url(#rg)"){
   const r=(size-sw)/2, c=2*Math.PI*r;
   return `<svg viewBox="0 0 ${size} ${size}"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--ac)"/><stop offset="1" stop-color="var(--ac2)"/></linearGradient></defs><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--card2)" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-Math.min(1,pct/100))}" style="transition:stroke-dashoffset .5s"/></svg>`;
 }
-const rtMins = id => Math.max(1,Math.round((RT[id].ex.reduce((a,e)=>a+EX[e].t,0) + RT[id].ex.length*S.settings.rest)/60));
+const LEVELS = {easy:[.75,"Easy"],normal:[1,"Normal"],hard:[1.35,"Hard"]};
+const exT = e => Math.max(10, Math.round(EX[e].t*(LEVELS[S.settings.level]||LEVELS.normal)[0]/5)*5);
+const fmtTime = hm => { const [h,m]=hm.split(":").map(Number); return new Date(2000,0,1,h,m).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}); };
+const rtMins = id => Math.max(1,Math.round((RT[id].ex.reduce((a,e)=>a+exT(e),0) + RT[id].ex.length*S.settings.rest)/60));
 function applyLook(){
   const r=document.documentElement, s=S.settings;
   if(s.theme==="system") r.removeAttribute("data-theme"); else r.setAttribute("data-theme",s.theme);
@@ -503,6 +530,7 @@ function vToday(){
     <div class="go" style="background:rgba(255,255,255,.3)">${I.play.replace('<svg','<svg width="18" height="18"')}</div>
   </button>
 
+  ${lockCard()}
   <div class="sec">Daily habits <small>${activeHabits().filter(h=>c[h]).length}/${activeHabits().length} done</small></div>
   <section class="card">${habits || '<div class="empty">All habits are hidden. Turn some on in Settings.</div>'}</section>
 
@@ -513,16 +541,24 @@ function vToday(){
 
   <section class="card"><h3>💡 Tip of the day</h3><div class="muted">${tip}</div></section>`;
 }
+function lockCard(){
+  const L=S.settings.lock, d=peekDay(dkey()), wd=new Date().getDay();
+  if(!L.on) return `<section class="card lockcard tap row" data-act="tab" data-v="set"><div style="font-size:1.6em">🔒</div><div style="flex:1"><b>Locked In</b><div class="muted small">Make Rise lock itself until you finish your workout</div></div>${I.chev}</section>`;
+  const done=d.workouts.length>0;
+  const msg = done ? "Unlocked for today — nice work" : d.lock==="emergency" ? "Emergency unlock used today" : L.days[wd] ? `Locks at ${fmtTime(L.time)} until you work out` : "No lock today";
+  return `<section class="card lockcard row"><div style="font-size:1.6em">${done?"🔓":"🔒"}</div><div style="flex:1"><b>Locked In</b><div class="muted small">${msg}</div></div>${done?"":`<button class="btn sm" data-act="lockNow">Lock now</button>`}</section>`;
+}
 function nutBar(n,v,goal,u){ const p=Math.min(100,Math.round(v/goal*100)); return `<div class="nut"><div class="row between"><b>${n}</b><span class="muted">${Math.round(v)} / ${goal} ${u}</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`; }
 
 function vTrain(){
   const now=new Date(), wd=now.getDay();
   const days=[...Array(7)].map((_,i)=>{ const dt=addDays(now,i-wd), k=dkey(dt), done=peekDay(k).workouts.length>0; return `<button class="tap ${i===wd?"today":""} ${done?"done":""}" data-act="rtSheet" data-v="${PLAN[i].r}">${"SMTWTFS"[i]}<b>${done?"✓":RT[PLAN[i].r].em}</b></button>`; }).join("");
-  const weekCount=[...Array(7)].reduce((a,_,i)=>a+peekDay(dkey(addDays(now,-i))).workouts.length,0);
+  const wk=[...Array(7)].filter((_,i)=>peekDay(dkey(addDays(now,i-wd))).workouts.length>0).length, goal=S.settings.weekGoal;
   const list = Object.keys(RT).map(id=>{ const r=RT[id]; return `<button class="rt tap" data-act="rtSheet" data-v="${id}"><div class="em" style="background:color-mix(in srgb,${r.col} 20%,transparent)">${r.em}</div><div style="min-width:0"><b>${r.n}</b><span>${rtMins(id)} min · ${r.ex.length} moves · ${r.d}</span></div><div class="go">${I.chev}</div></button>`; }).join("");
   return `
-  <div class="sec" style="margin-top:0">This week <small>${weekCount} workout${weekCount===1?"":"s"} in 7 days</small></div>
+  <div class="sec" style="margin-top:0">This week <small>${wk} / ${goal} days${wk>=goal?" · goal hit 🎯":""}</small></div>
   <div class="week">${days}</div>
+  <div class="bar" style="margin:-4px 0 16px"><i style="width:${Math.min(100,wk/goal*100)}%"></i></div>
   <button class="rt feature tap" data-act="startRt" data-v="${PLAN[wd].r}">
     <div class="em" style="background:rgba(255,255,255,.25)">${RT[PLAN[wd].r].em}</div>
     <div><span>Planned for today</span><b style="font-size:1.1em">${RT[PLAN[wd].r].n}</b><span>${rtMins(PLAN[wd].r)} min · tap to start</span></div>
@@ -609,9 +645,35 @@ function vProg(){
   <section class="card"><h3>✅ Daily score · last 7 days</h3>
     <div class="bars7">${sc.map(x=>`<div><span>${x.v||""}</span><i class="${x.v?"":"zero"}" style="height:${Math.max(4,x.v)}%"></i>${x.l}</div>`).join("")}</div></section>
 
+  ${statsCard()}
+  <div class="sec">Badges <small>${badgeList().filter(b=>b[2]).length} / ${badgeList().length}</small></div>
+  <section class="card"><div class="badges">${badgeList().map(b=>`<div class="bdg ${b[2]?"on":""}"><div>${b[0]}</div>${b[1]}</div>`).join("")}</div></section>
   <div class="sec">Learn</div>
   <section class="card">${LEARN.map(a=>`<button class="art tap" data-act="learn" data-v="${a.id}"><div class="em">${a.em}</div><div style="flex:1"><b>${a.n}</b><span class="muted small">${a.s}</span></div>${I.chev}</button>`).join("")}</section>
   <p class="tiny muted" style="text-align:center">Rise gives general wellness information, not medical advice.</p>`;
+}
+function bestStreak(){ let best=0, run=0; for(let i=365;i>=0;i--){ if(score(dkey(addDays(new Date(),-i)))>=50){ run++; best=Math.max(best,run); } else run=0; } return best; }
+function lastNAll(n,fn){ for(let i=0;i<n;i++){ if(!fn(peekDay(dkey(addDays(new Date(),-i))))) return false; } return true; }
+function badgeList(){
+  const n=S.log.length, best=bestStreak(), locked=S.log.filter(x=>x.locked).length, h=S.heights, gain=h.length>1?h[h.length-1].cm-h[0].cm:0;
+  const list=[
+    ["🌱","First workout",n>=1],["💪","10 workouts",n>=10],["🏋️","25 workouts",n>=25],["🏆","50 workouts",n>=50],
+    ["🔥","3-day streak",best>=3],["⚡","7-day streak",best>=7],["🌟","30-day streak",best>=30],["🔒","Locked In ×5",locked>=5],
+    ["📏","Tracking height",h.length>=2],["📈","Grew 1 cm",gain>=1],["💧","Water week",lastNAll(7,d=>d.water>=S.settings.waterGoal)],["😴","Sleep week",lastNAll(7,d=>d.sleep!=null&&d.sleep>=sleepRange()[0])]
+  ];
+  let changed=false;
+  list.forEach(b=>{ if(b[2]&&!S.badges[b[1]]){ S.badges[b[1]]=Date.now(); changed=true; } b[2]=!!S.badges[b[1]]; });
+  if(changed) save();
+  return list;
+}
+function statsCard(){
+  const wkAgo=Date.now()-7*86400000, recent=S.log.filter(x=>new Date(x.t).getTime()>=wkAgo);
+  const mins=Math.round(recent.reduce((a,x)=>a+x.secs,0)/60), locked=S.log.filter(x=>x.locked).length;
+  const last=S.log.slice(-4).reverse();
+  return `<section class="card"><h3>💪 Workouts</h3>
+    <div class="grid2" style="grid-template-columns:repeat(3,1fr)"><div class="stat"><b>${S.log.length}</b>total</div><div class="stat"><b>${mins}</b>min this week</div><div class="stat"><b>${locked}</b>locked in</div></div>
+    ${last.length?last.map(x=>`<div class="set"><div class="t"><b>${RT[x.id]?RT[x.id].em+" "+RT[x.id].n:"Workout"}${x.locked?" 🔒":""}</b><span>${new Date(x.t).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"})} · ${Math.max(1,Math.round(x.secs/60))} min</span></div></div>`).join(""):'<div class="empty">No workouts yet. Your history shows up here.</div>'}
+  </section>`;
 }
 function heightChart(){
   const pts=S.heights.slice(-30);
@@ -632,13 +694,24 @@ function heightChart(){
 }
 
 function vSet(){
-  const s=S.settings, p=S.profile||{};
+  const s=S.settings, p=S.profile||{}, L=s.lock;
   const sw=(k,on,lab,sub)=>`<div class="set"><div class="t"><b>${lab}</b>${sub?`<span>${sub}</span>`:""}</div><button class="sw ${on?"on":""}" role="switch" aria-checked="${!!on}" aria-label="${lab}" data-act="toggle" data-v="${k}"></button></div>`;
   const sel=(k,val,opts,lab,sub)=>`<div class="set"><div class="t"><b>${lab}</b>${sub?`<span>${sub}</span>`:""}</div><select class="sel" data-set="${k}" aria-label="${lab}">${opts.map(([v,n])=>`<option value="${v}" ${String(val)===String(v)?"selected":""}>${n}</option>`).join("")}</select></div>`;
   const acc=[["teal","#2dd4bf"],["violet","#a78bfa"],["sunset","#fb923c"],["ocean","#60a5fa"],["lime","#a3e635"]];
   return `
   <section class="card tap" data-act="profileSheet"><div class="row"><div style="width:52px;height:52px;border-radius:17px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:grid;place-items:center;font-family:var(--f-d);font-weight:800;font-size:1.3em;color:var(--ac-ink)">${esc((p.name||"?").slice(0,1).toUpperCase())}</div>
     <div style="flex:1"><b>${esc(p.name||"Your profile")}</b><div class="muted small">${age()} years · ${p.sex==="f"?"Female":"Male"} · ${fmtH(curHeight())}</div></div>${I.chev}</div></section>
+
+  <div class="sec">🔒 Locked In</div>
+  <section class="card lockcard">
+    ${sw("lock.on",L.on,"Lock me until I work out","Rise locks itself at your workout time")}
+    <div class="set"><div class="t"><b>Lock time</b></div><input type="time" class="sel" data-set="lock.time" value="${L.time}" aria-label="Lock time"></div>
+    <div class="set"><div class="t"><b>Days</b></div><div class="daychips">${[..."SMTWTFS"].map((c,i)=>`<button class="${L.days[i]?"on":""}" data-act="lockDay" data-v="${i}" aria-pressed="${!!L.days[i]}" aria-label="${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][i]}">${c}</button>`).join("")}</div></div>
+    ${sw("lock.strict",L.strict,"Strict mode","No skipping or quitting · timer pauses if you leave")}
+    <div class="set"><div class="t"><b>Lock me in now</b><span>Start a locked workout right away</span></div><button class="btn sm" data-act="lockNow">Lock</button></div>
+    <div class="set tap" data-act="lockHelp"><div class="t"><b>Make it a full phone lock</b><span>Samsung Pin app + auto-open at workout time</span></div>${I.chev}</div>
+    ${S.emerg?`<div class="tiny muted" style="padding-top:8px">Emergency unlocks used: ${S.emerg}</div>`:""}
+  </section>
 
   <div class="sec">Appearance</div>
   <section class="card">
@@ -652,6 +725,9 @@ function vSet(){
   <section class="card">
     ${sel("rest",s.rest,[[0,"None"],[10,"10 s"],[15,"15 s"],[20,"20 s"],[30,"30 s"]],"Rest between moves")}
     ${sel("prep",s.prep,[[3,"3 s"],[5,"5 s"],[10,"10 s"]],"Get-ready countdown")}
+    ${sel("level",s.level,Object.entries(LEVELS).map(([k,v])=>[k,v[1]]),"Difficulty","Changes how long each move lasts")}
+    ${sel("weekGoal",s.weekGoal,[3,4,5,6,7].map(n=>[n,n+" days"]),"Weekly goal")}
+    ${sw("voice",s.voice,"Voice coach","Announces each move and when to switch sides")}
     ${sw("sound",s.sound,"Sounds","Beeps for countdowns")}
     ${sw("haptics",s.haptics,"Vibration","Buzz on each new move")}
     ${sw("awake",s.awake,"Keep screen on","During workouts")}
@@ -680,7 +756,7 @@ function vSet(){
     <div class="set"><div class="t"><b>Restore backup</b></div><label class="btn ghost sm" style="cursor:pointer">Import<input type="file" accept="application/json,.json" id="importFile" hidden></label></div>
     <div class="set"><div class="t"><b>Reset everything</b><span>Deletes all your data on this phone</span></div><button class="btn danger sm" data-act="reset">Reset</button></div>
   </section>
-  <p class="tiny muted" style="text-align:center;margin:18px 10px">Rise v1.0 · Made by S Alk<br>Your data stays on your phone. Rise gives general wellness information, not medical advice — talk to a doctor about any growth concern.</p>`;
+  <p class="tiny muted" style="text-align:center;margin:18px 10px">Rise v1.1 · Made by S Alk<br>Your data stays on your phone. Rise gives general wellness information, not medical advice — talk to a doctor about any growth concern.</p>`;
 }
 
 /* ---------- Sheets ---------- */
@@ -730,31 +806,45 @@ function rtSheet(id){
   const r=RT[id];
   openSheet(`<div class="row" style="margin-bottom:8px"><div class="em" style="width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:1.7em;background:color-mix(in srgb,${r.col} 22%,transparent)">${r.em}</div><div><h2 style="margin:0">${r.n}</h2><div class="muted small">${rtMins(id)} min · ${r.ex.length} moves</div></div></div>
   <p class="muted small">${r.d}</p>
-  <section class="card">${r.ex.map((e,i)=>`<div class="exl"><div class="n">${i+1}</div><div><b>${EX[e].n} <span class="muted">· ${EX[e].t}s</span></b><span>${EX[e].c}</span></div></div>`).join("")}</section>
+  <section class="card">${r.ex.map((e,i)=>`<div class="exl"><div class="n">${i+1}</div><div><b>${EX[e].n} <span class="muted">· ${exT(e)}s${EX[e].s?" · both sides":""}</span></b><span>${EX[e].c}</span></div></div>`).join("")}</section>
   <button class="btn block" data-act="startRt" data-v="${id}">${I.play.replace('<svg','<svg width="18" height="18"')} Start</button>`);
 }
 function learnSheet(id){ const a=LEARN.find(x=>x.id===id); openSheet(`<div style="font-size:2.2em">${a.em}</div><h2>${a.n}</h2><div class="prose" style="margin-top:12px">${a.b}</div><button class="btn ghost block" data-act="closeSheet">Got it</button>`); }
+function lockHelp(){ openSheet(`<h2>Full phone lock</h2><div class="prose" style="margin-top:12px">
+  <p>Rise locks <b>itself</b> until you train — but on its own a web app can't stop you switching to another app. Two built-in Samsung features close that gap:</p>
+  <p><b>1. Pin Rise so you can't leave</b></p><ul><li>Settings → <b>Security and privacy</b> → <b>More security settings</b> → <b>Pin app</b> → turn it on.</li><li>Turn on <b>Ask for PIN before unpinning</b>.</li><li>When Rise locks: open <b>Recent apps</b>, tap the <b>Rise icon</b> at the top of its card → <b>Pin this app</b>.</li><li>Now you're stuck in Rise until you unpin it with your phone PIN.</li></ul>
+  <p><b>2. Open Rise automatically at workout time</b></p><ul><li>Open <b>Modes and Routines</b> (in Settings) → <b>Routines</b> → <b>+</b>.</li><li><b>If:</b> Time → ${fmtTime(S.settings.lock.time)}.</li><li><b>Then:</b> Apps → <b>Open an app</b> → <b>Rise</b>.</li></ul>
+  <p class="muted small">Install Rise to your home screen first so it shows up in the app lists. Menu names can differ a little between One UI versions.</p></div>
+  <button class="btn block" data-act="closeSheet">Got it</button>`); }
 function installHelp(){ openSheet(`<h2>Install on your Samsung</h2><div class="prose" style="margin-top:12px">
   <p><b>Samsung Internet</b></p><ul><li>Open Rise, tap the <b>menu ☰</b> at the bottom right.</li><li>Tap <b>Add page to → Home screen</b> (or the download icon in the address bar).</li></ul>
   <p><b>Chrome</b></p><ul><li>Tap the <b>⋮ menu</b> at the top right.</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li></ul>
   <p>Rise then opens full-screen like any other app and works offline.</p></div><button class="btn block" data-act="closeSheet">Done</button>`); }
 
+/* ---------- Voice coach ---------- */
+function say(t){ if(!S.settings.voice||!("speechSynthesis" in window)) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.rate=1.02; speechSynthesis.speak(u); }catch(e){} }
+
 /* ---------- Workout player ---------- */
 let P=null, wakeLock=null;
-function startRt(id){
+function startRt(id,locked){
   closeSheet();
   const r=RT[id]; let ex=r.ex.slice();
   if(S.profile && !S.profile.bar) ex=ex.map(e=>e==="hang"?"reach":e==="kneeraise"?"deadbug":e);
-  P={id,ex,i:0,phase:"prep",left:S.settings.prep,total:S.settings.prep,paused:false,last:Date.now()};
+  P={id,ex,i:0,phase:"prep",left:S.settings.prep,total:S.settings.prep,paused:false,last:Date.now(),start:Date.now(),locked:!!locked,strict:!!locked&&S.settings.lock.strict};
   $("#player").hidden=false; document.body.style.overflow="hidden";
   if(S.settings.awake && navigator.wakeLock) navigator.wakeLock.request("screen").then(l=>wakeLock=l).catch(()=>{});
+  if(locked){ goFull(); trapBack(); }
+  say("Get ready. "+EX[ex[0]].n);
   drawPlayer(); P.tick=setInterval(tick,200);
 }
 function tick(){
   if(!P||P.paused||P.phase==="done") { if(P) P.last=Date.now(); return; }
   const now=Date.now(); P.left-=(now-P.last)/1000; P.last=now;
   const s=Math.ceil(P.left);
-  if(s!==P.shown){ P.shown=s; if(s<=3&&s>0) beep(660,90); }
+  if(s!==P.shown){
+    P.shown=s; if(s<=3&&s>0) beep(660,90);
+    if(P.phase==="work"&&EX[P.ex[P.i]].s&&!P.half&&P.left<=P.total/2){ P.half=true; beep(780,140); buzz(50); say("Switch sides"); }
+  }
   if(P.left<=0) advance(); else updTimer();
 }
 function advance(dir=1){
@@ -765,41 +855,105 @@ function advance(dir=1){
   else if(P.phase==="rest"){ P.i++; setPhase("work"); }
 }
 function setPhase(ph){
-  P.phase=ph; P.total=ph==="work"?EX[P.ex[P.i]].t:ph==="rest"?S.settings.rest:S.settings.prep; P.left=P.total; P.last=Date.now(); P.shown=null;
-  if(ph==="work"){ beep(990,220,.2); buzz([60,40,60]); } else if(ph==="rest"){ beep(520,160); buzz(40); }
+  const prev=P.phase;
+  P.phase=ph; P.total=ph==="work"?exT(P.ex[P.i]):ph==="rest"?S.settings.rest:S.settings.prep; P.left=P.total; P.last=Date.now(); P.shown=null; P.half=false;
+  if(ph==="work"){ beep(990,220,.2); buzz([60,40,60]); say(prev==="work"?EX[P.ex[P.i]].n:"Go!"); }
+  else if(ph==="rest"){ beep(520,160); buzz(40); say("Rest. Next up, "+EX[P.ex[P.i+1]].n); }
   drawPlayer();
 }
 function finish(){
   clearInterval(P.tick); P.phase="done";
-  const d=day(); if(!d.workouts.includes(P.id)) d.workouts.push(P.id); save();
+  const before=Object.keys(S.badges).length;
+  const d=day(); if(!d.workouts.includes(P.id)) d.workouts.push(P.id);
+  if(P.locked) d.lock="done";
+  S.log.push({t:new Date().toISOString(),id:P.id,secs:Math.round((Date.now()-P.start)/1000),locked:P.locked});
+  if(S.log.length>1000) S.log=S.log.slice(-1000);
+  save();
+  P.newBadges=badgeList().filter(b=>b[2]).slice(0).filter(b=>S.badges[b[1]]>=P.start);
   beep(880,120); setTimeout(()=>beep(1175,200),140); buzz([80,60,80,60,160]);
-  drawPlayer();
+  say(P.locked?"Workout complete. You're unlocked.":"Workout complete. Great job.");
+  if(P.locked) exitFull();
+  drawPlayer(); checkLock();
 }
-function closePlayer(){ if(P) clearInterval(P.tick); P=null; $("#player").hidden=true; document.body.style.overflow=""; if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; } render(); }
+function closePlayer(){ if(P) clearInterval(P.tick); P=null; $("#player").hidden=true; document.body.style.overflow=""; if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; } try{speechSynthesis.cancel()}catch(e){} checkLock(); render(); }
 function drawPlayer(){
   const el=$("#player"), r=RT[P.id];
   if(P.phase==="done"){
+    const nb=P.newBadges||[];
     el.innerHTML=`<div class="pl-top"><span></span><button class="iconbtn" data-act="closePlayer" aria-label="Close">${I.x}</button></div>
-    <div class="pl-mid"><div class="confetti">🎉</div><h1 class="pl-name">Workout complete!</h1><p class="pl-cue">${r.n} · ${P.ex.length} moves · about ${rtMins(P.id)} minutes. Stand tall — you earned it.</p>
-    <div class="stat" style="margin:16px 0"><b>🔥 ${streak()}</b>day streak</div></div>
+    <div class="pl-mid"><div class="confetti">${P.locked?"🔓":"🎉"}</div><h1 class="pl-name">${P.locked?"Unlocked!":"Workout complete!"}</h1><p class="pl-cue">${r.n} · ${P.ex.length} moves · ${Math.max(1,Math.round((Date.now()-P.start)/60000))} min. Stand tall — you earned it.</p>
+    <div class="stat" style="margin:16px 0"><b>🔥 ${streak()}</b>day streak</div>
+    ${nb.length?`<div class="card" style="margin-top:6px"><div class="small muted">New badge${nb.length>1?"s":""}</div><div style="font-size:1.1em;font-weight:700;margin-top:4px">${nb.map(b=>b[0]+" "+b[1]).join(" · ")}</div></div>`:""}</div>
     <div class="pl-ctl"><button class="btn block" data-act="closePlayer">Done</button></div>`;
     return;
   }
-  const e=EX[P.ex[P.i]], nx=P.phase==="rest"?EX[P.ex[P.i+1]]:EX[P.ex[P.i+1]];
-  const showEx = P.phase==="rest" ? EX[P.ex[P.i+1]] : e;
-  el.innerHTML=`<div class="pl-top"><button class="iconbtn" data-act="closePlayer" aria-label="Quit workout">${I.x}</button><div class="small muted" style="font-weight:700">${r.em} ${r.n}</div><div class="small muted" style="width:42px;text-align:right">${P.i+1}/${P.ex.length}</div></div>
+  const nx=EX[P.ex[P.i+1]], showEx = P.phase==="rest" ? nx : EX[P.ex[P.i]];
+  const msg = P.away ? `<span class="awaymsg">Paused — you left Rise. The timer only runs while you're here.</span>` : P.phase==="work"&&nx ? "Next: "+nx.n : P.phase==="work" ? "Last move!" : "";
+  el.innerHTML=`<div class="pl-top">${P.strict?`<div class="iconbtn" aria-label="Locked">🔒</div>`:`<button class="iconbtn" data-act="closePlayer" aria-label="Quit workout">${I.x}</button>`}<div class="small muted" style="font-weight:700">${r.em} ${r.n}</div><div class="small muted" style="width:42px;text-align:right">${P.i+1}/${P.ex.length}</div></div>
   <div class="pl-prog">${P.ex.map((_,i)=>`<i class="${i<P.i?"on":i===P.i?"cur":""}"></i>`).join("")}</div>
   <div class="pl-mid">
-    <div class="pl-phase">${P.phase==="prep"?"Get ready":P.phase==="rest"?"Rest · up next":"Go"}</div>
+    <div class="pl-phase">${P.paused?"Paused":P.phase==="prep"?"Get ready":P.phase==="rest"?"Rest · up next":"Go"}</div>
     <h1 class="pl-name">${showEx.n}</h1>
     <div class="timer"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="var(--card2)" stroke-width="9"/><circle id="tc" cx="60" cy="60" r="54" fill="none" stroke="${P.phase==="work"?"var(--ac)":"var(--muted)"}" stroke-width="9" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="0"/></svg><div class="v" id="tv"></div></div>
     <p class="pl-cue">${showEx.c}</p>
-    <div class="pl-next">${P.phase==="work"&&nx?"Next: "+nx.n:P.phase==="work"?"Last move!":""}</div>
+    <div class="pl-next">${msg}</div>
   </div>
-  <div class="pl-ctl"><button class="r" data-act="plPrev" aria-label="Previous">${I.prev}</button><button class="p" data-act="plPause" aria-label="${P.paused?"Resume":"Pause"}" id="pp">${P.paused?I.play:I.pause}</button><button class="r" data-act="plNext" aria-label="Skip">${I.next}</button></div>`;
+  <div class="pl-ctl">${P.strict?`<span style="width:58px"></span>`:`<button class="r" data-act="plPrev" aria-label="Previous">${I.prev}</button>`}<button class="p" data-act="plPause" aria-label="${P.paused?"Resume":"Pause"}" id="pp">${P.paused?I.play:I.pause}</button>${P.strict?`<span style="width:58px"></span>`:`<button class="r" data-act="plNext" aria-label="Skip">${I.next}</button>`}</div>
+  ${P.strict?`<div style="max-width:520px;width:100%;margin:0 auto"><button class="hold" data-hold="1"><i></i><span>Hold 5 seconds for emergency unlock</span></button></div>`:""}`;
   updTimer();
 }
 function updTimer(){ const tv=$("#tv"), tc=$("#tc"); if(!tv) return; tv.textContent=Math.max(0,Math.ceil(P.left)); tc.setAttribute("stroke-dashoffset",(339.3*(1-Math.max(0,P.left)/P.total)).toFixed(1)); }
+
+/* ---------- Locked In ---------- */
+let lockPick=null, holdT=null;
+const hmNow = () => { const n=new Date(); return String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0"); };
+function lockDue(){
+  if(!S.profile) return false;
+  const L=S.settings.lock, d=peekDay(dkey());
+  if(d.workouts.length || d.lock==="done" || d.lock==="emergency") return false;
+  if(d.lock==="now") return true;
+  return L.on && !!L.days[new Date().getDay()] && hmNow()>=L.time;
+}
+const isLocked = () => !$("#lock").hidden || !!(P && P.locked && P.phase!=="done");
+function trapBack(){ try{ history.pushState({rise:"lock"},""); }catch(e){} }
+function goFull(){ try{ const r=document.documentElement; if(!document.fullscreenElement && r.requestFullscreen) r.requestFullscreen({navigationUI:"hide"}).catch(()=>{}); }catch(e){} }
+function exitFull(){ try{ if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }catch(e){} }
+function checkLock(){
+  const el=$("#lock"), due=lockDue() && !P;
+  if(due){
+    if(el.hidden){ el.hidden=false; document.body.style.overflow="hidden"; closeSheet(); trapBack(); buzz([200,100,200]); beep(700,220); }
+    drawLock();
+  } else if(!el.hidden){ el.hidden=true; if(!P) document.body.style.overflow=""; }
+}
+function drawLock(){
+  const planned=PLAN[new Date().getDay()].r, sk=streak(), nm=S.profile&&S.profile.name;
+  if(!lockPick || !RT[lockPick]) lockPick=planned;
+  $("#lock").innerHTML=`<div class="wrap">
+    <div class="lkbadge">🔒 LOCKED IN</div>
+    <h1>Workout time</h1>
+    <p class="sub">${nm?esc(nm)+", Rise":"Rise"} stays locked until you finish a workout.${sk?` Don't lose your 🔥 ${sk}-day streak.`:""}</p>
+    <div class="lkpick">${Object.keys(RT).filter(id=>id!=="night").map(id=>`<button class="tap ${lockPick===id?"on":""}" data-act="lockPick" data-v="${id}"><b>${RT[id].em} ${RT[id].n}</b><span>${rtMins(id)} min${id===planned?" · planned":""}</span></button>`).join("")}</div>
+    <div style="flex:1"></div>
+    <button class="btn block" data-act="lockStart" style="height:56px;font-size:1.05em">${I.play.replace('<svg','<svg width="20" height="20"')} Start ${RT[lockPick].n}</button>
+    <button class="hold" data-hold="1"><i></i><span>Hold 5 seconds for emergency unlock</span></button>
+    ${S.settings.lock.strict?`<p class="tiny muted" style="text-align:center;margin:12px 0 0">Strict mode: no skipping, and the timer pauses if you leave Rise.</p>`:""}
+  </div>`;
+}
+function emergency(){
+  const d=day(); d.lock="emergency"; S.emerg=(S.emerg||0)+1; save();
+  if(P){ clearInterval(P.tick); P=null; $("#player").hidden=true; if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; } }
+  try{speechSynthesis.cancel()}catch(e){}
+  exitFull(); checkLock(); document.body.style.overflow=""; render(); toast("Emergency unlock used");
+}
+function stopHold(){ if(holdT){ clearInterval(holdT); holdT=null; } document.querySelectorAll("[data-hold] i").forEach(i=>i.style.width="0"); }
+document.addEventListener("pointerdown", e=>{
+  const el=e.target.closest("[data-hold]"); if(!el) return;
+  e.preventDefault(); const bar=el.querySelector("i"), t0=Date.now(); stopHold();
+  holdT=setInterval(()=>{ const f=Math.min(1,(Date.now()-t0)/5000); bar.style.width=(f*100)+"%"; if(f>=1){ stopHold(); emergency(); } },50);
+});
+["pointerup","pointercancel"].forEach(ev=>document.addEventListener(ev,stopHold));
+document.addEventListener("contextmenu", e=>{ if(e.target.closest("[data-hold]")) e.preventDefault(); });
+window.addEventListener("popstate", ()=>{ if(isLocked()){ trapBack(); toast("Finish your workout to unlock 🔒"); } });
 
 /* ---------- Onboarding ---------- */
 let OB={step:0,sex:"m",bar:false};
@@ -877,9 +1031,10 @@ document.addEventListener("click", e=>{
     case "toggle": {
       const s=S.settings;
       if(v.startsWith("habit:")) s.habits[v.slice(6)]=!s.habits[v.slice(6)];
+      else if(v.startsWith("lock.")){ const k=v.slice(5); s.lock[k]=!s.lock[k]; if(k==="on"&&s.lock.on){ if("Notification" in window&&Notification.permission==="default") Notification.requestPermission(); toast("Locked In on · locks at "+fmtTime(s.lock.time)); } }
       else if(v.startsWith("rem.")){ const k=v.slice(4); s.rem[k]=!s.rem[k]; if(k==="on"&&s.rem.on) askNotify(); }
       else s[v]=!s[v];
-      save(); render(); break;
+      save(); render(); checkLock(); break;
     }
     case "accent": S.settings.accent=v; save(); applyLook(); render(); break;
     case "install": if(installEvt){ installEvt.prompt(); installEvt.userChoice.finally(()=>{installEvt=null; render();}); } break;
@@ -889,10 +1044,15 @@ document.addEventListener("click", e=>{
       l.href=u; l.download="rise-backup-"+dkey()+".json"; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); toast("Backup saved"); break;
     }
     case "reset": if(confirm("Delete all Rise data on this phone? This can't be undone.")){ try{localStorage.removeItem(KEY)}catch(e){} location.reload(); } break;
-    case "plPause": P.paused=!P.paused; P.last=Date.now(); $("#pp").innerHTML=P.paused?I.play:I.pause; break;
-    case "plNext": if(P.phase==="work"&&P.i>=P.ex.length-1) finish(); else advance(); break;
-    case "plPrev": advance(-1); break;
+    case "plPause": P.paused=!P.paused; P.away=false; P.last=Date.now(); drawPlayer(); break;
+    case "plNext": if(P.strict) break; if(P.phase==="work"&&P.i>=P.ex.length-1) finish(); else advance(); break;
+    case "plPrev": if(!P.strict) advance(-1); break;
     case "closePlayer": if(P&&P.phase!=="done"&&P.i>0&&!confirm("Quit this workout?")) break; closePlayer(); break;
+    case "lockPick": lockPick=v; drawLock(); break;
+    case "lockStart": $("#lock").hidden=true; startRt(lockPick,true); break;
+    case "lockNow": { const d=day(); if(d.workouts.length){ toast("You already trained today ✓"); break; } d.lock="now"; save(); checkLock(); break; }
+    case "lockDay": S.settings.lock.days[+v]=S.settings.lock.days[+v]?0:1; save(); render(); checkLock(); break;
+    case "lockHelp": lockHelp(); break;
     case "obNext": obNext(); break;
     case "obBack": obCollect(); OB.step=Math.max(0,OB.step-1); onboard(); break;
     case "obSex": OB.sex=v; obCollect(); onboard(); break;
@@ -908,32 +1068,42 @@ document.addEventListener("change", e=>{
   }
   const k=el.dataset.set; if(!k) return;
   let val=el.value; if(/^\d+$/.test(val)) val=+val;
-  if(k.startsWith("rem.")) S.settings.rem[k.slice(4)]=val; else S.settings[k]=val;
-  save(); applyLook(); render();
+  if(k.startsWith("rem.")) S.settings.rem[k.slice(4)]=val; else if(k.startsWith("lock.")) S.settings.lock[k.slice(5)]=val; else S.settings[k]=val;
+  save(); applyLook(); render(); checkLock();
 });
 document.addEventListener("input", e=>{
   if(e.target.id==="foodQ"){ foodQ=e.target.value; const q=foodQ.trim().toLowerCase(); const list=FOODS.filter(x=>(foodFilter==="all"||x.tg.includes(foodFilter))&&(!q||x.n.toLowerCase().includes(q))); $("#foodList").innerHTML=list.length?list.map(foodRow).join(""):'<div class="empty">No foods match.</div>'; }
 });
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ if(P&&S.settings.awake&&navigator.wakeLock&&!wakeLock) navigator.wakeLock.request("screen").then(l=>wakeLock=l).catch(()=>{}); if(!P) render(); } else if(wakeLock){ wakeLock=null; } });
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){
+    if(P && !P.paused && P.phase!=="done"){ P.paused=true; P.away=true; try{speechSynthesis.cancel()}catch(e){} }
+    wakeLock=null; return;
+  }
+  if(P){ if(S.settings.awake&&navigator.wakeLock&&!wakeLock) navigator.wakeLock.request("screen").then(l=>wakeLock=l).catch(()=>{}); drawPlayer(); }
+  else { render(); checkLock(); }
+});
 window.matchMedia("(prefers-color-scheme: light)").addEventListener?.("change",applyLook);
 
 /* ---------- Reminders ---------- */
 function askNotify(){ if(!("Notification" in window)) return toast("Notifications aren't supported here"); Notification.requestPermission().then(p=>{ if(p!=="granted"){ toast("Allow notifications in phone settings"); } }); }
 function notify(title,body){
   if(!("Notification" in window)||Notification.permission!=="granted") return;
-  const opt={body,icon:"icon-192.png",badge:"icon-192.png",vibrate:[80,40,80]};
-  if(navigator.serviceWorker&&navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r=>r.showNotification(title,opt)).catch(()=>{ try{new Notification(title,opt)}catch(e){} });
+  const opt={body,icon:"icon-192.png",badge:"icon-192.png",vibrate:[80,40,80],tag:title};
+  if(navigator.serviceWorker&&navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r=>r.showNotification(title,opt)).catch(()=>{});
   else try{ new Notification(title,opt); }catch(e){}
 }
 function checkReminders(){
-  const r=S.settings.rem; if(!r.on||!S.profile) return;
-  const now=new Date(), hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0"), k=dkey();
+  if(!S.profile) return;
+  const r=S.settings.rem, now=new Date(), hm=hmNow(), k=dkey();
   let fired; try{ fired=JSON.parse(localStorage.getItem("rise.fired")||"{}"); }catch(e){ fired={}; }
   if(fired.day!==k) fired={day:k};
   const once=(id,cond,t,b)=>{ if(cond&&!fired[id]){ fired[id]=1; notify(t,b); } };
-  once("workout", hm>=r.workout && !peekDay(k).workouts.length, "Time to train 💪", RT[PLAN[now.getDay()].r].n+" · "+rtMins(PLAN[now.getDay()].r)+" min");
-  once("bed", hm>=r.bed, "Wind down for growth 🌙", "Screens off soon. Try the 6-minute bedtime routine.");
-  if(r.water && now.getHours()>=9 && now.getHours()<=21 && now.getHours()%2===1) once("w"+now.getHours(), peekDay(k).water<S.settings.waterGoal, "Drink some water 💧", peekDay(k).water+" of "+S.settings.waterGoal+" glasses so far");
+  if(S.settings.lock.on) once("lock", lockDue(), "🔒 Locked In · workout time", "Rise is locked until you finish today's workout.");
+  if(r.on){
+    if(!S.settings.lock.on) once("workout", hm>=r.workout && !peekDay(k).workouts.length, "Time to train 💪", RT[PLAN[now.getDay()].r].n+" · "+rtMins(PLAN[now.getDay()].r)+" min");
+    once("bed", hm>=r.bed, "Wind down for growth 🌙", "Screens off soon. Try the 6-minute bedtime routine.");
+    if(r.water && now.getHours()>=9 && now.getHours()<=21 && now.getHours()%2===1) once("w"+now.getHours(), peekDay(k).water<S.settings.waterGoal, "Drink some water 💧", peekDay(k).water+" of "+S.settings.waterGoal+" glasses so far");
+  }
   try{ localStorage.setItem("rise.fired",JSON.stringify(fired)); }catch(e){}
 }
 
@@ -941,7 +1111,8 @@ function checkReminders(){
 let installEvt=null;
 window.addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); installEvt=e; if(tab==="set") render(); });
 applyLook();
-if(!S.profile) onboard(); else render();
+if(!S.profile) onboard(); else { render(); checkLock(); }
+setInterval(()=>{ if(!P) checkLock(); },15000);
 setInterval(checkReminders,30000); checkReminders();
 let lastDay=dkey(); setInterval(()=>{ if(dkey()!==lastDay){ lastDay=dkey(); if(!P) render(); } },60000);
 if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
